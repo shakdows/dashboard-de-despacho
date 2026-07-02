@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Control de Despachos · Dashboard Operativo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root{
+  --bg:#eef1f8; --card:#ffffff; --ink:#0f1729; --muted:#64708a; --line:#e5e9f2;
+  --purple:#7B5FFF; --teal:#06B6A4; --blue:#3B82F6; --amber:#F59E0B; --rose:#F43F5E;
+  --green:#10B981; --navy:#0b1120;
+  --shadow:0 1px 3px rgba(16,24,40,.06),0 8px 24px rgba(16,24,40,.06);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--ink);line-height:1.5;-webkit-font-smoothing:antialiased}
+h1,h2,h3,.brand{font-family:'Exo 2','Inter',sans-serif}
+.wrap{max-width:1400px;margin:0 auto;padding:0 22px 60px}
+
+/* Header */
+header{background:linear-gradient(120deg,#0b1120 0%,#1e1b4b 55%,#312e81 100%);color:#fff;position:relative;overflow:hidden}
+header::after{content:"";position:absolute;right:-60px;top:-60px;width:320px;height:320px;background:radial-gradient(circle,rgba(123,95,255,.45),transparent 62%);pointer-events:none}
+header::before{content:"";position:absolute;left:30%;bottom:-120px;width:340px;height:340px;background:radial-gradient(circle,rgba(6,182,164,.28),transparent 62%);pointer-events:none}
+.head-inner{max-width:1400px;margin:0 auto;padding:26px 22px 30px;position:relative;z-index:2}
+.brand-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.logo{width:40px;height:40px;border-radius:11px;background:linear-gradient(135deg,var(--purple),var(--teal));display:grid;place-items:center;font-weight:800;font-family:'Exo 2';font-size:20px;color:#0b1120;box-shadow:0 6px 18px rgba(123,95,255,.5)}
+h1{font-size:24px;font-weight:800;letter-spacing:.2px}
+.sub{color:#c3c9e0;font-size:13.5px;margin-top:3px}
+.badge{margin-left:auto;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.16);padding:7px 13px;border-radius:999px;font-size:12.5px;color:#e7ebfb;display:flex;align-items:center;gap:7px}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--teal);box-shadow:0 0 0 4px rgba(6,182,164,.25)}
+
+/* Filters */
+.filters{background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);padding:16px 18px;margin-top:-22px;position:relative;z-index:5;display:flex;flex-wrap:wrap;gap:16px;align-items:flex-end}
+.fitem{display:flex;flex-direction:column;gap:6px;min-width:150px;flex:1}
+.fitem label{font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--muted)}
+select,input[type=text]{font-family:inherit;font-size:13.5px;padding:9px 11px;border:1px solid var(--line);border-radius:10px;background:#f8fafc;color:var(--ink);outline:none;transition:.15s;width:100%}
+select:focus,input[type=text]:focus{border-color:var(--purple);box-shadow:0 0 0 3px rgba(123,95,255,.14);background:#fff}
+.toggle{display:inline-flex;background:#f1f3fa;border:1px solid var(--line);border-radius:10px;padding:3px;gap:3px}
+.toggle button{font-family:inherit;font-size:13px;font-weight:600;border:0;background:transparent;color:var(--muted);padding:7px 14px;border-radius:8px;cursor:pointer;transition:.15s}
+.toggle button.active{background:#fff;color:var(--purple);box-shadow:0 1px 3px rgba(16,24,40,.12)}
+.reset{font-family:inherit;font-size:13px;font-weight:600;border:1px solid var(--line);background:#fff;color:var(--muted);padding:9px 16px;border-radius:10px;cursor:pointer;transition:.15s;height:fit-content}
+.reset:hover{border-color:var(--rose);color:var(--rose)}
+
+/* KPIs */
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:18px}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:15px;box-shadow:var(--shadow);padding:16px 17px;position:relative;overflow:hidden}
+.kpi .cap{font-size:11.5px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;color:var(--muted)}
+.kpi .val{font-family:'Exo 2';font-size:30px;font-weight:800;margin-top:5px;line-height:1}
+.kpi .foot{font-size:12px;color:var(--muted);margin-top:6px}
+.kpi .strip{position:absolute;left:0;top:0;bottom:0;width:4px}
+.k1 .strip{background:var(--purple)} .k2 .strip{background:var(--teal)}
+.k3 .strip{background:var(--green)} .k4 .strip{background:var(--amber)}
+.k5 .strip{background:var(--blue)} .k6 .strip{background:var(--rose)}
+.k7 .strip{background:#6366F1} .k8 .strip{background:#0ea5e9}
+.pill{display:inline-block;font-size:11px;font-weight:700;padding:2px 8px;border-radius:999px}
+.pill.ok{background:rgba(16,185,129,.13);color:#059669}
+.pill.warn{background:rgba(245,158,11,.15);color:#b45309}
+
+/* Insights */
+.insights{background:linear-gradient(120deg,#faf9ff,#f2fbfa);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);padding:16px 20px;margin-top:16px}
+.insights h3{font-size:14px;display:flex;align-items:center;gap:8px;margin-bottom:9px}
+.insights ul{list-style:none;display:grid;grid-template-columns:1fr 1fr;gap:8px 26px}
+.insights li{font-size:13.2px;color:#39435c;display:flex;gap:9px;align-items:flex-start}
+.insights li b{color:var(--ink)}
+.ic{color:var(--purple);font-weight:800;flex:none}
+
+/* Grid + cards */
+.grid{display:grid;grid-template-columns:repeat(12,1fr);gap:16px;margin-top:16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);padding:16px 18px;display:flex;flex-direction:column}
+.card h2{font-size:15px;font-weight:700;display:flex;align-items:center;gap:8px}
+.card .desc{font-size:12px;color:var(--muted);margin:3px 0 12px}
+.tag{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;padding:3px 9px;border-radius:999px;margin-left:auto}
+.tag.a{background:rgba(123,95,255,.12);color:var(--purple)}
+.tag.b{background:rgba(6,182,164,.13);color:#08857a}
+.tag.c{background:rgba(59,130,246,.12);color:#2563eb}
+.canvas-box{position:relative;flex:1;min-height:260px}
+.col-12{grid-column:span 12}.col-8{grid-column:span 8}.col-6{grid-column:span 6}
+.col-5{grid-column:span 5}.col-7{grid-column:span 7}.col-4{grid-column:span 4}
+
+/* Table */
+.tablecard{margin-top:16px}
+.tabletop{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+.tabletop input{max-width:280px}
+.count{font-size:12.5px;color:var(--muted);margin-left:auto}
+.tscroll{overflow:auto;max-height:420px;border:1px solid var(--line);border-radius:12px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+thead th{position:sticky;top:0;background:#f3f5fb;text-align:left;padding:11px 13px;font-weight:700;color:#475069;border-bottom:1px solid var(--line);white-space:nowrap;z-index:2}
+tbody td{padding:10px 13px;border-bottom:1px solid #f1f3f9;color:#374151}
+tbody tr:hover{background:#f8faff}
+.st{font-size:11px;font-weight:700;padding:3px 9px;border-radius:999px}
+.st.env{background:rgba(16,185,129,.13);color:#059669}
+.st.pen{background:rgba(245,158,11,.16);color:#b45309}
+
+footer{text-align:center;color:var(--muted);font-size:12.5px;margin-top:30px}
+footer b{color:var(--purple)}
+.section-title{font-size:12px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted);margin:26px 4px 2px;display:flex;align-items:center;gap:10px}
+.section-title::after{content:"";flex:1;height:1px;background:var(--line)}
+@media(max-width:1050px){.kpis{grid-template-columns:repeat(2,1fr)}.insights ul{grid-template-columns:1fr}
+  .col-8,.col-6,.col-5,.col-7,.col-4{grid-column:span 12}}
+@media(max-width:560px){.kpis{grid-template-columns:1fr}.filters{gap:12px}.fitem{min-width:120px}}
+</style>
+</head>
+<body>
+<header>
+  <div class="head-inner">
+    <div class="brand-row">
+      <div class="logo">V</div>
+      <div>
+        <h1>Control de Despachos · Dashboard Operativo</h1>
+        <div class="sub" id="subhead">Análisis de despachos a provincia</div>
+      </div>
+      <div class="badge"><span class="dot"></span> Datos en vivo del reporte</div>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+  <!-- FILTROS -->
+  <div class="filters">
+    <div class="fitem"><label>Fecha</label><select id="fFecha"></select></div>
+    <div class="fitem"><label>Destino</label><select id="fDestino"></select></div>
+    <div class="fitem"><label>Transportista</label><select id="fEmpresa"></select></div>
+    <div class="fitem"><label>Estado</label><select id="fEstado"></select></div>
+    <div class="fitem" style="flex:0 0 auto"><label>Métrica de análisis</label>
+      <div class="toggle" id="metricToggle">
+        <button data-m="despachos" class="active">Despachos</button>
+        <button data-m="bultos">Bultos</button>
+      </div>
+    </div>
+    <button class="reset" id="btnReset">↺ Limpiar filtros</button>
+  </div>
+
+  <!-- KPIs -->
+  <div class="kpis" id="kpis"></div>
+
+  <!-- INSIGHTS -->
+  <div class="insights">
+    <h3>💡 Hallazgos clave para tomar decisiones</h3>
+    <ul id="insightList"></ul>
+  </div>
+
+  <div class="section-title">Análisis de despachos</div>
+  <!-- CHARTS -->
+  <div class="grid">
+    <div class="card col-8">
+      <h2>📈 Evolución diaria del despacho <span class="tag a">Tendencia</span></h2>
+      <div class="desc">Volumen de despachos (barras) y bultos movilizados (línea) por día. Identifica los días pico de carga operativa.</div>
+      <div class="canvas-box"><canvas id="chDia"></canvas></div>
+    </div>
+    <div class="card col-4">
+      <h2>🚦 Estado de despachos <span class="tag b">Cumplimiento</span></h2>
+      <div class="desc">Proporción de despachos enviados vs. pendientes. Mide el nivel de servicio.</div>
+      <div class="canvas-box"><canvas id="chEstado"></canvas></div>
+    </div>
+
+    <div class="card col-6">
+      <h2>📍 Top destinos <span class="tag c">Demanda</span></h2>
+      <div class="desc">Destinos con mayor volumen. Base para negociar tarifas y priorizar rutas frecuentes.</div>
+      <div class="canvas-box" style="min-height:340px"><canvas id="chDestino"></canvas></div>
+    </div>
+    <div class="card col-6">
+      <h2>🚚 Transportistas más usados <span class="tag a">Proveedores</span></h2>
+      <div class="desc">Concentración de carga por proveedor de transporte. Revela dependencia y poder de negociación.</div>
+      <div class="canvas-box" style="min-height:340px"><canvas id="chEmpresa"></canvas></div>
+    </div>
+
+    <div class="card col-7">
+      <h2>📅 Patrón por día de la semana <span class="tag b">Planificación</span></h2>
+      <div class="desc">Distribución de la carga según el día. Útil para dimensionar personal y turnos.</div>
+      <div class="canvas-box"><canvas id="chSemana"></canvas></div>
+    </div>
+    <div class="card col-5">
+      <h2>📦 Bultos por destino (Top 8) <span class="tag c">Volumen</span></h2>
+      <div class="desc">Dónde se concentra el mayor volumen físico de mercadería.</div>
+      <div class="canvas-box"><canvas id="chBultos"></canvas></div>
+    </div>
+  </div>
+
+  <div class="section-title">Tiempos de salida a provincia · vehículos propios</div>
+  <div class="grid">
+    <div class="card col-5">
+      <h2>⏱️ Tiempo promedio por vehículo <span class="tag a">Eficiencia</span></h2>
+      <div class="desc">Duración media (minutos) del proceso de despacho a provincia por unidad. Menor es mejor.</div>
+      <div class="canvas-box"><canvas id="chVeh"></canvas></div>
+    </div>
+    <div class="card col-7">
+      <h2>📉 Evolución del tiempo de despacho <span class="tag b">Seguimiento</span></h2>
+      <div class="desc">Minutos por viaje a lo largo del período. Detecta demoras y mejoras en el proceso.</div>
+      <div class="canvas-box"><canvas id="chRutaDia"></canvas></div>
+    </div>
+  </div>
+
+  <!-- TABLE -->
+  <div class="card tablecard">
+    <div class="tabletop">
+      <h2>🗂️ Detalle de despachos</h2>
+      <input type="text" id="tSearch" placeholder="Buscar por guía, destino o transportista…">
+      <span class="count" id="tCount"></span>
+    </div>
+    <div class="tscroll">
+      <table>
+        <thead><tr><th>Fecha</th><th>Día</th><th>N° Guía</th><th>Bultos</th><th>Destino</th><th>Transportista</th><th>Estado</th></tr></thead>
+        <tbody id="tBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <footer>Dashboard generado con datos de <b>Control de Despacho</b> y <b>Control de Rutas</b> · Período 18 – 30 jun 2026 · <b>VERONIX</b></footer>
+</div>
+
+<script>
+const DATA = {"despachos": [{"fecha": "2026-06-18", "dia": "Jueves", "guia": "69028", "bultos": 1, "destino": "Cusco", "empresa": "Shalom", "estado": "Enviado"}, {"fecha": "2026-06-18", "dia": "Jueves", "guia": "69061", "bultos": 1, "destino": "Satipo", "empresa": "Molina", "estado": "Enviado"}, {"fecha": "2026-06-18", "dia": "Jueves", "guia": "69046", "bultos": 1, "destino": "Bagua Grande", "empresa": "Gpp Cargo", "estado": "Enviado"}, {"fecha": "2026-06-18", "dia": "Jueves", "guia": "69024", "bultos": 1, "destino": "Bagua Grande", "empresa": "Gpp Cargo", "estado": "Enviado"}, {"fecha": "2026-06-18", "dia": "Jueves", "guia": "69054", "bultos": 1, "destino": "Satipo", "empresa": "Molina", "estado": "Enviado"}, {"fecha": "2026-06-18", "dia": "Jueves", "guia": "69036", "bultos": 1, "destino": "Tacna", "empresa": "Tarapoto Courier", "estado": "Enviado"}, {"fecha": "2026-06-18", "dia": "Jueves", "guia": "69043", "bultos": 1, "destino": "Tacna", "empresa": "Tarapoto Courier", "estado": "Enviado"}, {"fecha": "2026-06-18", "dia": "Jueves", "guia": "69037", "bultos": 1, "destino": "Arequipa", "empresa": "Enlaces", "estado": "Enviado"}, {"fecha": "2026-06-18", "dia": "Jueves", "guia": "69045", "bultos": 1, "destino": "Chepen", "empresa": "Allinbus", "estado": "Enviado"}, {"fecha": "2026-06-18", "dia": "Jueves", "guia": "69042", "bultos": 1, "destino": "Pucallpa", "empresa": "Tarapoto Courier", "estado": "Enviado"}, {"fecha": "2026-06-18", "dia": "Jueves", "guia": "69035", "bultos": 1, "destino": "Aguaytia", "empresa": "Transmar", "estado": "Enviado"}, {"fecha": "2026-06-18", "dia": "Jueves", "guia": "69059 - 69044", "bultos": 2, "destino": "Chiclayo", "empresa": "Allinbus", "estado": "Enviado"}, {"fecha": "2026-06-18", "dia": "Jueves", "guia": "69030", "bultos": 1, "destino": "Aguaytia", "empresa": "Amazon Cargo", "estado": "Enviado"}, {"fecha": "2026-06-18", "dia": "Jueves", "guia": "69048", "bultos": 2, "destino": "Satipo", "empresa": "Molina", "estado": "Enviado"}, {"fecha": "2026-06-18", "dia": "Jueves", "guia": "69033", "bultos": 2, "destino": "Pucallpa", "empresa": "Transmar", "estado": "Enviado"}, {"fecha": "2026-06-18", "dia": "Jueves", "guia": "69032", "bultos": 1, "destino": "Satipo", "empresa": "San Pedro", "estado": "Enviado"}, {"fecha": "2026-06-18", "dia": "Jueves", "guia": "69055", "bultos": 1, "destino": "Chiclayo", "empresa": "Allinbus", "estado": "Enviado"}, {"fecha": "2026-06-18", "dia": "Jueves", "guia": "69064-063-065-069", "bultos": 2, "destino": "Satipo", "empresa": "Molina", "estado": "Enviado"}, {"fecha": "2026-06-18", "dia": "Jueves", "guia": "69060", "bultos": 1, "destino": "Pucallpa", "empresa": "Tarapoto Courier", "estado": "Enviado"}, {"fecha": "2026-06-18", "dia": "Jueves", "guia": "69031", "bultos": 1, "destino": "Chiclayo", "empresa": "Chavín Express", "estado": "Enviado"}, {"fecha": "2026-06-18", "dia": "Jueves", "guia": "69053", "bultos": 1, "destino": "Cusco", "empresa": "Tarapoto Courier", "estado": "Enviado"}, {"fecha": "2026-06-18", "dia": "Jueves", "guia": "69062", "bultos": 1, "destino": "Pucallpa", "empresa": "Tarapoto Courier", "estado": "Enviado"}, {"fecha": "2026-06-18", "dia": "Jueves", "guia": "69056", "bultos": 1, "destino": "Trujillo", "empresa": "Allinbus", "estado": "Pendiente"}, {"fecha": "2026-06-18", "dia": "Jueves", "guia": "69034", "bultos": 1, "destino": "Pichanaki", "empresa": "Molina", "estado": "Pendiente"}, {"fecha": "2026-06-18", "dia": "Jueves", "guia": "69067", "bultos": 1, "destino": "Trujillo", "empresa": "Chavín Express", "estado": "Pendiente"}, {"fecha": "2026-06-18", "dia": "Jueves", "guia": "69049", "bultos": 1, "destino": "Moquegua", "empresa": "Transportes Moquegua", "estado": "Pendiente"}, {"fecha": "2026-06-18", "dia": "Jueves", "guia": "69066 - 69068", "bultos": 3, "destino": "Pucallpa", "empresa": "Transmar", "estado": "Pendiente"}, {"fecha": "2026-06-18", "dia": "Jueves", "guia": "6904 - 69070", "bultos": 1, "destino": "(Sin dato)", "empresa": "(Sin dato)", "estado": "Pendiente"}, {"fecha": "2026-06-19", "dia": "Viernes", "guia": "69117", "bultos": 1, "destino": "Huancayo", "empresa": "Espinoza Cargo", "estado": "Enviado"}, {"fecha": "2026-06-19", "dia": "Viernes", "guia": "69109", "bultos": 1, "destino": "Satipo", "empresa": "Molina", "estado": "Enviado"}, {"fecha": "2026-06-19", "dia": "Viernes", "guia": "69108", "bultos": 1, "destino": "Satipo", "empresa": "Molina", "estado": "Enviado"}, {"fecha": "2026-06-19", "dia": "Viernes", "guia": "69079 - 69116 ", "bultos": 1, "destino": "Satipo", "empresa": "San Pedro", "estado": "Enviado"}, {"fecha": "2026-06-19", "dia": "Viernes", "guia": "69111", "bultos": 1, "destino": "Satipo", "empresa": "San Pedro", "estado": "Enviado"}, {"fecha": "2026-06-19", "dia": "Viernes", "guia": "69093", "bultos": 1, "destino": "Satipo", "empresa": "Molina", "estado": "Enviado"}, {"fecha": "2026-06-19", "dia": "Viernes", "guia": "69088", "bultos": 1, "destino": "Chepen", "empresa": "Allinbus", "estado": "Enviado"}, {"fecha": "2026-06-19", "dia": "Viernes", "guia": "69113", "bultos": 1, "destino": "Huanuco", "empresa": "Etposa", "estado": "Enviado"}, {"fecha": "2026-06-19", "dia": "Viernes", "guia": "69101", "bultos": 1, "destino": "Cajamarca", "empresa": "TPP Courier", "estado": "Enviado"}, {"fecha": "2026-06-19", "dia": "Viernes", "guia": "69105", "bultos": 1, "destino": "Puerto Maldonado", "empresa": "TPP Courier", "estado": "Enviado"}, {"fecha": "2026-06-19", "dia": "Viernes", "guia": "69078", "bultos": 1, "destino": "Pucallpa", "empresa": "TPP Courier", "estado": "Enviado"}, {"fecha": "2026-06-19", "dia": "Viernes", "guia": "69096 - 69103", "bultos": 1, "destino": "Ica", "empresa": "Yalet Courier", "estado": "Enviado"}, {"fecha": "2026-06-19", "dia": "Viernes", "guia": "69047 - 070 - 098", "bultos": 4, "destino": "Puente Viru", "empresa": "Chan Chan", "estado": "Enviado"}, {"fecha": "2026-06-19", "dia": "Viernes", "guia": "69097", "bultos": 1, "destino": "Cajamarca", "empresa": "Gil Gal Cargo", "estado": "Enviado"}, {"fecha": "2026-06-19", "dia": "Viernes", "guia": "69087", "bultos": 1, "destino": "Pucallpa", "empresa": "TPP Courier", "estado": "Enviado"}, {"fecha": "2026-06-19", "dia": "Viernes", "guia": "69081", "bultos": 1, "destino": "Iquitos", "empresa": "TPP Courier", "estado": "Enviado"}, {"fecha": "2026-06-19", "dia": "Viernes", "guia": "69066 - 69068", "bultos": 3, "destino": "Pucallpa", "empresa": "Transmar", "estado": "Enviado"}, {"fecha": "2026-06-19", "dia": "Viernes", "guia": "69080", "bultos": 3, "destino": "Arequipa", "empresa": "Transmotar", "estado": "Enviado"}, {"fecha": "2026-06-19", "dia": "Viernes", "guia": "69112", "bultos": 1, "destino": "Aguaytia", "empresa": "Amazon Cargo", "estado": "Enviado"}, {"fecha": "2026-06-19", "dia": "Viernes", "guia": "69100", "bultos": 3, "destino": "Ica", "empresa": "Flores", "estado": "Enviado"}, {"fecha": "2026-06-19", "dia": "Viernes", "guia": "69083", "bultos": 1, "destino": "Iquitos", "empresa": "TPP Courier", "estado": "Enviado"}, {"fecha": "2026-06-19", "dia": "Viernes", "guia": "69034", "bultos": 1, "destino": "Pichanaki", "empresa": "Molina", "estado": "Enviado"}, {"fecha": "2026-06-19", "dia": "Viernes", "guia": "69082 - 69104", "bultos": 1, "destino": "Trujillo", "empresa": "Chavín Express", "estado": "Enviado"}, {"fecha": "2026-06-19", "dia": "Viernes", "guia": "69074", "bultos": 1, "destino": "San Ramon", "empresa": "Selva Central", "estado": "Enviado"}, {"fecha": "2026-06-19", "dia": "Viernes", "guia": "69089", "bultos": 1, "destino": "Bagua Grande", "empresa": "Gpp Cargo", "estado": "Enviado"}, {"fecha": "2026-06-19", "dia": "Viernes", "guia": "69095", "bultos": 3, "destino": "Piura", "empresa": "Flores", "estado": "Enviado"}, {"fecha": "2026-06-19", "dia": "Viernes", "guia": "69114", "bultos": 3, "destino": "Tarapoto", "empresa": "Alfa del Perú", "estado": "Pendiente"}, {"fecha": "2026-06-20", "dia": "Sábado", "guia": "69143", "bultos": 1, "destino": "Cajamarca", "empresa": "Shalom", "estado": "Enviado"}, {"fecha": "2026-06-20", "dia": "Sábado", "guia": "69123", "bultos": 2, "destino": "Juliaca", "empresa": "Grael", "estado": "Enviado"}, {"fecha": "2026-06-20", "dia": "Sábado", "guia": "69135", "bultos": 2, "destino": "Trujillo", "empresa": "Chavín Express", "estado": "Enviado"}, {"fecha": "2026-06-20", "dia": "Sábado", "guia": "69120", "bultos": 3, "destino": "Arequipa", "empresa": "Comité 4", "estado": "Enviado"}, {"fecha": "2026-06-20", "dia": "Sábado", "guia": "69131", "bultos": 1, "destino": "Cusco", "empresa": "TPP Courier", "estado": "Enviado"}, {"fecha": "2026-06-20", "dia": "Sábado", "guia": "69140", "bultos": 1, "destino": "Juliaca", "empresa": "TPP Courier", "estado": "Enviado"}, {"fecha": "2026-06-20", "dia": "Sábado", "guia": "69141", "bultos": 1, "destino": "Talara", "empresa": "Turismo Civa", "estado": "Enviado"}, {"fecha": "2026-06-20", "dia": "Sábado", "guia": "69114", "bultos": 3, "destino": "Tarapoto", "empresa": "Alfa del Perú", "estado": "Enviado"}, {"fecha": "2026-06-20", "dia": "Sábado", "guia": "69137", "bultos": 2, "destino": "Puerto Maldonado", "empresa": "Grael", "estado": "Enviado"}, {"fecha": "2026-06-20", "dia": "Sábado", "guia": "69138", "bultos": 2, "destino": "Satipo", "empresa": "Molina", "estado": "Enviado"}, {"fecha": "2026-06-20", "dia": "Sábado", "guia": "69139", "bultos": 1, "destino": "Satipo", "empresa": "Molina", "estado": "Enviado"}, {"fecha": "2026-06-22", "dia": "Lunes", "guia": "69170", "bultos": 2, "destino": "Cusco", "empresa": "Molina", "estado": "Enviado"}, {"fecha": "2026-06-22", "dia": "Lunes", "guia": "69152", "bultos": 2, "destino": "Pucallpa", "empresa": "Transamazonica", "estado": "Enviado"}, {"fecha": "2026-06-22", "dia": "Lunes", "guia": "69153", "bultos": 1, "destino": "Moquegua", "empresa": "Flores", "estado": "Enviado"}, {"fecha": "2026-06-22", "dia": "Lunes", "guia": "69156", "bultos": 12, "destino": "Jaen", "empresa": "Gpp Cargo", "estado": "Enviado"}, {"fecha": "2026-06-22", "dia": "Lunes", "guia": "69186", "bultos": 1, "destino": "Arequipa", "empresa": "Enlaces", "estado": "Enviado"}, {"fecha": "2026-06-22", "dia": "Lunes", "guia": "69171", "bultos": 1, "destino": "Trujillo", "empresa": "Chavín Express", "estado": "Enviado"}, {"fecha": "2026-06-22", "dia": "Lunes", "guia": "69178", "bultos": 1, "destino": "Satipo", "empresa": "San Pedro", "estado": "Enviado"}, {"fecha": "2026-06-22", "dia": "Lunes", "guia": "69179", "bultos": 1, "destino": "Cusco", "empresa": "TPP Courier", "estado": "Enviado"}, {"fecha": "2026-06-22", "dia": "Lunes", "guia": "69151", "bultos": 1, "destino": "Satipo", "empresa": "Molina", "estado": "Enviado"}, {"fecha": "2026-06-22", "dia": "Lunes", "guia": "69164 - 69164", "bultos": 1, "destino": "Arequipa", "empresa": "Shalom", "estado": "Enviado"}, {"fecha": "2026-06-22", "dia": "Lunes", "guia": "69157", "bultos": 1, "destino": "Piura", "empresa": "Flores", "estado": "Enviado"}, {"fecha": "2026-06-22", "dia": "Lunes", "guia": "69168", "bultos": 1, "destino": "Pucallpa", "empresa": "TPP Courier", "estado": "Enviado"}, {"fecha": "2026-06-22", "dia": "Lunes", "guia": "69176", "bultos": 1, "destino": "Pucallpa", "empresa": "TPP Courier", "estado": "Enviado"}, {"fecha": "2026-06-22", "dia": "Lunes", "guia": "69167", "bultos": 1, "destino": "Arequipa", "empresa": "Enlaces", "estado": "Enviado"}, {"fecha": "2026-06-22", "dia": "Lunes", "guia": "69160", "bultos": 1, "destino": "Cañete", "empresa": "Shalom", "estado": "Enviado"}, {"fecha": "2026-06-22", "dia": "Lunes", "guia": "69185", "bultos": 1, "destino": "Trujillo", "empresa": "Chavín Express", "estado": "Enviado"}, {"fecha": "2026-06-22", "dia": "Lunes", "guia": "69173", "bultos": 2, "destino": "Mazamari", "empresa": "San Pedro", "estado": "Enviado"}, {"fecha": "2026-06-22", "dia": "Lunes", "guia": "69146", "bultos": 1, "destino": "Arequipa", "empresa": "Shalom", "estado": "Enviado"}, {"fecha": "2026-06-23", "dia": "Martes", "guia": "69229", "bultos": 1, "destino": "Trujillo", "empresa": "Shalom", "estado": "Enviado"}, {"fecha": "2026-06-23", "dia": "Martes", "guia": "69212", "bultos": 1, "destino": "Satipo", "empresa": "Molina", "estado": "Enviado"}, {"fecha": "2026-06-23", "dia": "Martes", "guia": "69195 - 9195 - 9217", "bultos": 10, "destino": "Pucallpa", "empresa": "Transamazonica", "estado": "Enviado"}, {"fecha": "2026-06-23", "dia": "Martes", "guia": "69192", "bultos": 1, "destino": "Pucallpa", "empresa": "Transmar", "estado": "Enviado"}, {"fecha": "2026-06-23", "dia": "Martes", "guia": "69209", "bultos": 2, "destino": "Pucallpa", "empresa": "Transmar", "estado": "Enviado"}, {"fecha": "2026-06-23", "dia": "Martes", "guia": "69242", "bultos": 1, "destino": "Pucallpa", "empresa": "TPP Courier", "estado": "Enviado"}, {"fecha": "2026-06-23", "dia": "Martes", "guia": "69216", "bultos": 1, "destino": "Pucallpa", "empresa": "Transamazonica", "estado": "Enviado"}, {"fecha": "2026-06-23", "dia": "Martes", "guia": "69206", "bultos": 1, "destino": "Arequipa", "empresa": "Transmotar", "estado": "Enviado"}, {"fecha": "2026-06-23", "dia": "Martes", "guia": "69230", "bultos": 5, "destino": "Nueva Cajamarca", "empresa": "Gpp Cargo", "estado": "Enviado"}, {"fecha": "2026-06-23", "dia": "Martes", "guia": "69197", "bultos": 2, "destino": "Juliaca", "empresa": "Marvisur", "estado": "Enviado"}, {"fecha": "2026-06-23", "dia": "Martes", "guia": "69196", "bultos": 1, "destino": "Juliaca", "empresa": "TPP Courier", "estado": "Enviado"}, {"fecha": "2026-06-23", "dia": "Martes", "guia": "69213", "bultos": 9, "destino": "Jaen", "empresa": "Gpp Cargo", "estado": "Enviado"}, {"fecha": "2026-06-23", "dia": "Martes", "guia": "69224", "bultos": 1, "destino": "Ayacucho", "empresa": "Antezana", "estado": "Enviado"}, {"fecha": "2026-06-23", "dia": "Martes", "guia": "69240 - 69241", "bultos": 1, "destino": "Piura", "empresa": "Sullana Express", "estado": "Enviado"}, {"fecha": "2026-06-23", "dia": "Martes", "guia": "69237", "bultos": 1, "destino": "Huanuco", "empresa": "Etposa", "estado": "Enviado"}, {"fecha": "2026-06-23", "dia": "Martes", "guia": "69222", "bultos": 2, "destino": "Satipo", "empresa": "San Pedro", "estado": "Enviado"}, {"fecha": "2026-06-23", "dia": "Martes", "guia": "69198", "bultos": 1, "destino": "Arequipa", "empresa": "Enlaces", "estado": "Enviado"}, {"fecha": "2026-06-23", "dia": "Martes", "guia": "69234", "bultos": 1, "destino": "Mazamari", "empresa": "San Pedro", "estado": "Enviado"}, {"fecha": "2026-06-23", "dia": "Martes", "guia": "69235", "bultos": 1, "destino": "Satipo", "empresa": "San Pedro", "estado": "Enviado"}, {"fecha": "2026-06-23", "dia": "Martes", "guia": "69211 - 69202", "bultos": 2, "destino": "Trujillo", "empresa": "Chavín Express", "estado": "Enviado"}, {"fecha": "2026-06-23", "dia": "Martes", "guia": "69236", "bultos": 1, "destino": "Trujillo", "empresa": "Via", "estado": "Enviado"}, {"fecha": "2026-06-23", "dia": "Martes", "guia": "69203", "bultos": 1, "destino": "Huancayo", "empresa": "Shalom", "estado": "Enviado"}, {"fecha": "2026-06-23", "dia": "Martes", "guia": "69199", "bultos": 1, "destino": "Iquitos", "empresa": "TPP Courier", "estado": "Enviado"}, {"fecha": "2026-06-23", "dia": "Martes", "guia": "69183 - 69189", "bultos": 5, "destino": "Sullana", "empresa": "Sullana Express", "estado": "Enviado"}, {"fecha": "2026-06-23", "dia": "Martes", "guia": "69187", "bultos": 1, "destino": "Puente Viru", "empresa": "Chan Chan", "estado": "Enviado"}, {"fecha": "2026-06-23", "dia": "Martes", "guia": "69184", "bultos": 1, "destino": "Chiclayo", "empresa": "Allinbus", "estado": "Enviado"}, {"fecha": "2026-06-23", "dia": "Martes", "guia": "69182", "bultos": 2, "destino": "Arequipa", "empresa": "Enlaces", "estado": "Enviado"}, {"fecha": "2026-06-23", "dia": "Martes", "guia": "69175", "bultos": 1, "destino": "Rioja", "empresa": "Gh Buss", "estado": "Enviado"}, {"fecha": "2026-06-23", "dia": "Martes", "guia": "69177", "bultos": 1, "destino": "Arequipa", "empresa": "Enlaces", "estado": "Enviado"}, {"fecha": "2026-06-24", "dia": "Miércoles", "guia": "69288", "bultos": 1, "destino": "Pichanaki", "empresa": "Molina", "estado": "Enviado"}, {"fecha": "2026-06-24", "dia": "Miércoles", "guia": "69278", "bultos": 1, "destino": "Satipo", "empresa": "Molina", "estado": "Enviado"}, {"fecha": "2026-06-24", "dia": "Miércoles", "guia": "69257", "bultos": 1, "destino": "La Merced", "empresa": "Molina", "estado": "Enviado"}, {"fecha": "2026-06-24", "dia": "Miércoles", "guia": "69247", "bultos": 2, "destino": "Satipo", "empresa": "Molina", "estado": "Enviado"}, {"fecha": "2026-06-24", "dia": "Miércoles", "guia": "69248", "bultos": 1, "destino": "Jaen", "empresa": "Móvil Buss", "estado": "Enviado"}, {"fecha": "2026-06-24", "dia": "Miércoles", "guia": "69249", "bultos": 1, "destino": "Pucallpa", "empresa": "TPP Courier", "estado": "Enviado"}, {"fecha": "2026-06-24", "dia": "Miércoles", "guia": "69268", "bultos": 1, "destino": "Chiclayo", "empresa": "Allinbus", "estado": "Enviado"}, {"fecha": "2026-06-24", "dia": "Miércoles", "guia": "69286", "bultos": 1, "destino": "Trujillo", "empresa": "Allinbus", "estado": "Enviado"}, {"fecha": "2026-06-24", "dia": "Miércoles", "guia": "69287", "bultos": 1, "destino": "Arequipa", "empresa": "Enlaces", "estado": "Enviado"}, {"fecha": "2026-06-24", "dia": "Miércoles", "guia": "69282", "bultos": 2, "destino": "Arequipa", "empresa": "Enlaces", "estado": "Enviado"}, {"fecha": "2026-06-24", "dia": "Miércoles", "guia": "69280", "bultos": 1, "destino": "Jaen", "empresa": "Shalom", "estado": "Enviado"}, {"fecha": "2026-06-24", "dia": "Miércoles", "guia": "69283", "bultos": 2, "destino": "Trujillo", "empresa": "Andeskar", "estado": "Enviado"}, {"fecha": "2026-06-24", "dia": "Miércoles", "guia": "69292", "bultos": 3, "destino": "San Ramon", "empresa": "Selva Central", "estado": "Enviado"}, {"fecha": "2026-06-24", "dia": "Miércoles", "guia": "69266 - 69261", "bultos": 1, "destino": "Trujillo", "empresa": "Via", "estado": "Enviado"}, {"fecha": "2026-06-24", "dia": "Miércoles", "guia": "69256", "bultos": 1, "destino": "Arequipa", "empresa": "Enlaces", "estado": "Enviado"}, {"fecha": "2026-06-24", "dia": "Miércoles", "guia": "69272", "bultos": 1, "destino": "Cajamarca", "empresa": "TPP Courier", "estado": "Enviado"}, {"fecha": "2026-06-24", "dia": "Miércoles", "guia": "69263", "bultos": 1, "destino": "Pucallpa", "empresa": "TPP Courier", "estado": "Enviado"}, {"fecha": "2026-06-24", "dia": "Miércoles", "guia": "69275", "bultos": 2, "destino": "Arequipa", "empresa": "Transmotar", "estado": "Enviado"}, {"fecha": "2026-06-24", "dia": "Miércoles", "guia": "69255", "bultos": 1, "destino": "Cajamarca", "empresa": "Gil Gal Cargo", "estado": "Enviado"}, {"fecha": "2026-06-24", "dia": "Miércoles", "guia": "69252", "bultos": 2, "destino": "Pucallpa", "empresa": "Transamazonica", "estado": "Enviado"}, {"fecha": "2026-06-24", "dia": "Miércoles", "guia": "69281", "bultos": 1, "destino": "Ica", "empresa": "Yalet Courier", "estado": "Enviado"}, {"fecha": "2026-06-24", "dia": "Miércoles", "guia": "69253", "bultos": 1, "destino": "Arequipa", "empresa": "TPP Courier", "estado": "Enviado"}, {"fecha": "2026-06-24", "dia": "Miércoles", "guia": "69289", "bultos": 1, "destino": "Puerto Maldonado", "empresa": "Grael", "estado": "Enviado"}, {"fecha": "2026-06-24", "dia": "Miércoles", "guia": "69273", "bultos": 2, "destino": "Pucallpa", "empresa": "TPP Courier", "estado": "Enviado"}, {"fecha": "2026-06-24", "dia": "Miércoles", "guia": "69232 - 69232 ", "bultos": 2, "destino": "Moquegua", "empresa": "Flores", "estado": "Enviado"}, {"fecha": "2026-06-24", "dia": "Miércoles", "guia": "69214", "bultos": 1, "destino": "Pucallpa", "empresa": "TPP Courier", "estado": "Enviado"}, {"fecha": "2026-06-25", "dia": "Jueves", "guia": "69338", "bultos": 1, "destino": "Huancayo", "empresa": "Antezana", "estado": "Enviado"}, {"fecha": "2026-06-25", "dia": "Jueves", "guia": "69344", "bultos": 1, "destino": "Trujillo", "empresa": "Chavín Express", "estado": "Enviado"}, {"fecha": "2026-06-25", "dia": "Jueves", "guia": "69331", "bultos": 2, "destino": "Pichanaki", "empresa": "Molina", "estado": "Enviado"}, {"fecha": "2026-06-25", "dia": "Jueves", "guia": "69341", "bultos": 1, "destino": "Puerto Maldonado", "empresa": "Grael", "estado": "Enviado"}, {"fecha": "2026-06-25", "dia": "Jueves", "guia": "69333", "bultos": 1, "destino": "Jaen", "empresa": "Gpp Cargo", "estado": "Enviado"}, {"fecha": "2026-06-25", "dia": "Jueves", "guia": "69302", "bultos": 1, "destino": "Cajamarca", "empresa": "Gil Gal Cargo", "estado": "Enviado"}, {"fecha": "2026-06-25", "dia": "Jueves", "guia": "69324", "bultos": 3, "destino": "Chiclayo", "empresa": "Gpp Cargo", "estado": "Enviado"}, {"fecha": "2026-06-25", "dia": "Jueves", "guia": "69308", "bultos": 2, "destino": "Winchazao", "empresa": "Entrafesa", "estado": "Enviado"}, {"fecha": "2026-06-25", "dia": "Jueves", "guia": "69311", "bultos": 1, "destino": "Mazuko", "empresa": "Marvisur", "estado": "Enviado"}, {"fecha": "2026-06-25", "dia": "Jueves", "guia": "69340", "bultos": 1, "destino": "Arequipa", "empresa": "Enlaces", "estado": "Enviado"}, {"fecha": "2026-06-25", "dia": "Jueves", "guia": "69316", "bultos": 1, "destino": "Trujillo", "empresa": "Via", "estado": "Enviado"}, {"fecha": "2026-06-25", "dia": "Jueves", "guia": "69327", "bultos": 1, "destino": "Huanuco", "empresa": "Etposa", "estado": "Enviado"}, {"fecha": "2026-06-25", "dia": "Jueves", "guia": "68946", "bultos": 1, "destino": "Pangoa", "empresa": "San Pedro", "estado": "Enviado"}, {"fecha": "2026-06-25", "dia": "Jueves", "guia": "69317", "bultos": 1, "destino": "Pangoa", "empresa": "Internacional", "estado": "Enviado"}, {"fecha": "2026-06-25", "dia": "Jueves", "guia": "69335", "bultos": 1, "destino": "Arequipa", "empresa": "Enlaces", "estado": "Enviado"}, {"fecha": "2026-06-25", "dia": "Jueves", "guia": "69334", "bultos": 1, "destino": "Chiclayo", "empresa": "Allinbus", "estado": "Enviado"}, {"fecha": "2026-06-25", "dia": "Jueves", "guia": "69315", "bultos": 1, "destino": "Chiclayo", "empresa": "Allinbus", "estado": "Enviado"}, {"fecha": "2026-06-25", "dia": "Jueves", "guia": "69323", "bultos": 1, "destino": "Chiclayo", "empresa": "Allinbus", "estado": "Enviado"}, {"fecha": "2026-06-25", "dia": "Jueves", "guia": "69314", "bultos": 1, "destino": "Satipo", "empresa": "Molina", "estado": "Enviado"}, {"fecha": "2026-06-25", "dia": "Jueves", "guia": "69332", "bultos": 1, "destino": "Cusco", "empresa": "Molina", "estado": "Enviado"}, {"fecha": "2026-06-25", "dia": "Jueves", "guia": "69336", "bultos": 1, "destino": "Huancayo", "empresa": "Antezana", "estado": "Enviado"}, {"fecha": "2026-06-25", "dia": "Jueves", "guia": "69322", "bultos": 1, "destino": "Iquitos", "empresa": "TPP Courier", "estado": "Enviado"}, {"fecha": "2026-06-25", "dia": "Jueves", "guia": "69343", "bultos": 1, "destino": "Satipo", "empresa": "San Pedro", "estado": "Enviado"}, {"fecha": "2026-06-25", "dia": "Jueves", "guia": "69339", "bultos": 2, "destino": "Iquitos", "empresa": "TPP Courier", "estado": "Enviado"}, {"fecha": "2026-06-25", "dia": "Jueves", "guia": "69312", "bultos": 1, "destino": "Pucallpa", "empresa": "TPP Courier", "estado": "Enviado"}, {"fecha": "2026-06-25", "dia": "Jueves", "guia": "69313", "bultos": 1, "destino": "Cusco", "empresa": "TPP Courier", "estado": "Enviado"}, {"fecha": "2026-06-25", "dia": "Jueves", "guia": "69326", "bultos": 1, "destino": "Iquitos", "empresa": "TPP Courier", "estado": "Enviado"}, {"fecha": "2026-06-25", "dia": "Jueves", "guia": "69298", "bultos": 1, "destino": "Jaen", "empresa": "Shalom", "estado": "Enviado"}, {"fecha": "2026-06-26", "dia": "Viernes", "guia": "69349", "bultos": 10, "destino": "Cerro De Pasco", "empresa": "Baldeon Junin", "estado": "Enviado"}, {"fecha": "2026-06-26", "dia": "Viernes", "guia": "69355", "bultos": 2, "destino": "Trujillo", "empresa": "Chavín Express", "estado": "Enviado"}, {"fecha": "2026-06-26", "dia": "Viernes", "guia": "69364", "bultos": 1, "destino": "Casma", "empresa": "Móvil Buss", "estado": "Enviado"}, {"fecha": "2026-06-26", "dia": "Viernes", "guia": "69362", "bultos": 1, "destino": "Pangoa", "empresa": "San Pedro", "estado": "Enviado"}, {"fecha": "2026-06-26", "dia": "Viernes", "guia": "69380", "bultos": 1, "destino": "Pangoa", "empresa": "San Pedro", "estado": "Enviado"}, {"fecha": "2026-06-26", "dia": "Viernes", "guia": "69388", "bultos": 1, "destino": "Pucallpa", "empresa": "TPP Courier", "estado": "Enviado"}, {"fecha": "2026-06-26", "dia": "Viernes", "guia": "69375", "bultos": 1, "destino": "Iquitos", "empresa": "TPP Courier", "estado": "Enviado"}, {"fecha": "2026-06-26", "dia": "Viernes", "guia": "69381", "bultos": 1, "destino": "Ayacucho", "empresa": "Molina", "estado": "Enviado"}, {"fecha": "2026-06-26", "dia": "Viernes", "guia": "69378", "bultos": 1, "destino": "Iquitos", "empresa": "TPP Courier", "estado": "Enviado"}, {"fecha": "2026-06-26", "dia": "Viernes", "guia": "69384", "bultos": 1, "destino": "Puerto Maldonado", "empresa": "TPP Courier", "estado": "Enviado"}, {"fecha": "2026-06-26", "dia": "Viernes", "guia": "69373", "bultos": 1, "destino": "Iquitos", "empresa": "TPP Courier", "estado": "Enviado"}, {"fecha": "2026-06-26", "dia": "Viernes", "guia": "69370", "bultos": 1, "destino": "Yurimaguas", "empresa": "Fropesa", "estado": "Enviado"}, {"fecha": "2026-06-26", "dia": "Viernes", "guia": "69368", "bultos": 9, "destino": "Cajamarca", "empresa": "Gil Gal Cargo", "estado": "Enviado"}, {"fecha": "2026-06-26", "dia": "Viernes", "guia": "69346", "bultos": 6, "destino": "Arequipa", "empresa": "Transmotar", "estado": "Enviado"}, {"fecha": "2026-06-26", "dia": "Viernes", "guia": "69376", "bultos": 2, "destino": "Arequipa", "empresa": "Transmotar", "estado": "Enviado"}, {"fecha": "2026-06-26", "dia": "Viernes", "guia": "69391 - 69385", "bultos": 2, "destino": "Puerto Maldonado", "empresa": "Grael", "estado": "Enviado"}, {"fecha": "2026-06-26", "dia": "Viernes", "guia": "69379", "bultos": 1, "destino": "Pucallpa", "empresa": "Transamazonica", "estado": "Enviado"}, {"fecha": "2026-06-26", "dia": "Viernes", "guia": "69361", "bultos": 2, "destino": "Pucallpa", "empresa": "Transamazonica", "estado": "Enviado"}, {"fecha": "2026-06-26", "dia": "Viernes", "guia": "69389", "bultos": 1, "destino": "Pucallpa", "empresa": "Transamazonica", "estado": "Enviado"}, {"fecha": "2026-06-26", "dia": "Viernes", "guia": "69359", "bultos": 1, "destino": "Huacho", "empresa": "Shalom", "estado": "Enviado"}, {"fecha": "2026-06-26", "dia": "Viernes", "guia": "69358", "bultos": 1, "destino": "Cusco", "empresa": "Molina", "estado": "Enviado"}, {"fecha": "2026-06-27", "dia": "Sábado", "guia": "69396", "bultos": 1, "destino": "Tacna", "empresa": "TPP Courier", "estado": "Enviado"}, {"fecha": "2026-06-27", "dia": "Sábado", "guia": "69411", "bultos": 1, "destino": "Puerto Maldonado", "empresa": "TPP Courier", "estado": "Enviado"}, {"fecha": "2026-06-27", "dia": "Sábado", "guia": "69397 - 69405", "bultos": 1, "destino": "Iquitos", "empresa": "TPP Courier", "estado": "Enviado"}, {"fecha": "2026-06-27", "dia": "Sábado", "guia": "69419", "bultos": 1, "destino": "Pucallpa", "empresa": "TPP Courier", "estado": "Enviado"}, {"fecha": "2026-06-27", "dia": "Sábado", "guia": "69393", "bultos": 1, "destino": "Puerto Maldonado", "empresa": "TPP Courier", "estado": "Enviado"}, {"fecha": "2026-06-27", "dia": "Sábado", "guia": "69402", "bultos": 3, "destino": "Satipo", "empresa": "Molina", "estado": "Enviado"}, {"fecha": "2026-06-27", "dia": "Sábado", "guia": "69412", "bultos": 2, "destino": "Satipo", "empresa": "Molina", "estado": "Enviado"}, {"fecha": "2026-06-27", "dia": "Sábado", "guia": "69422", "bultos": 1, "destino": "Satipo", "empresa": "Molina", "estado": "Enviado"}, {"fecha": "2026-06-27", "dia": "Sábado", "guia": "69424", "bultos": 1, "destino": "Trujillo", "empresa": "Chavín Express", "estado": "Enviado"}, {"fecha": "2026-06-27", "dia": "Sábado", "guia": "69414", "bultos": 1, "destino": "Satipo", "empresa": "San Pedro", "estado": "Enviado"}, {"fecha": "2026-06-27", "dia": "Sábado", "guia": "69409", "bultos": 2, "destino": "Pangoa", "empresa": "San Pedro", "estado": "Enviado"}, {"fecha": "2026-06-27", "dia": "Sábado", "guia": "69407", "bultos": 1, "destino": "Arequipa", "empresa": "Enlaces", "estado": "Enviado"}, {"fecha": "2026-06-27", "dia": "Sábado", "guia": "69420", "bultos": 1, "destino": "Arequipa", "empresa": "Enlaces", "estado": "Enviado"}, {"fecha": "2026-06-27", "dia": "Sábado", "guia": "69410 - 377 - 408", "bultos": 4, "destino": "Pucallpa", "empresa": "Transmar", "estado": "Enviado"}, {"fecha": "2026-06-30", "dia": "Martes", "guia": "69432", "bultos": 5, "destino": "Huancayo", "empresa": "Antezana", "estado": "Enviado"}, {"fecha": "2026-06-30", "dia": "Martes", "guia": "69452", "bultos": 1, "destino": "Piura", "empresa": "Móvil Buss", "estado": "Enviado"}, {"fecha": "2026-06-30", "dia": "Martes", "guia": "69467", "bultos": 4, "destino": "Pucallpa", "empresa": "Móvil Buss", "estado": "Enviado"}, {"fecha": "2026-06-30", "dia": "Martes", "guia": "69444", "bultos": 1, "destino": "Huanuco", "empresa": "Etposa", "estado": "Enviado"}, {"fecha": "2026-06-30", "dia": "Martes", "guia": "69436", "bultos": 10, "destino": "Satipo", "empresa": "San Pedro", "estado": "Enviado"}, {"fecha": "2026-06-30", "dia": "Martes", "guia": "69447", "bultos": 1, "destino": "Trujillo", "empresa": "Chavín Express", "estado": "Enviado"}, {"fecha": "2026-06-30", "dia": "Martes", "guia": "69448", "bultos": 1, "destino": "Trujillo", "empresa": "Chavín Express", "estado": "Enviado"}, {"fecha": "2026-06-30", "dia": "Martes", "guia": "69456", "bultos": 3, "destino": "Bellavista", "empresa": "Móvil Buss", "estado": "Enviado"}, {"fecha": "2026-06-30", "dia": "Martes", "guia": "69453", "bultos": 1, "destino": "Pucallpa", "empresa": "Móvil Buss", "estado": "Enviado"}, {"fecha": "2026-06-30", "dia": "Martes", "guia": "69433 - 69464", "bultos": 3, "destino": "Pucallpa", "empresa": "Móvil Buss", "estado": "Enviado"}, {"fecha": "2026-06-30", "dia": "Martes", "guia": "69455", "bultos": 2, "destino": "Pichanaki", "empresa": "San Pedro", "estado": "Enviado"}, {"fecha": "2026-06-30", "dia": "Martes", "guia": "69439 - 69475", "bultos": 7, "destino": "Pangoa", "empresa": "San Pedro", "estado": "Enviado"}, {"fecha": "2026-06-30", "dia": "Martes", "guia": "69449 - 69450", "bultos": 2, "destino": "Arequipa", "empresa": "Enlaces", "estado": "Enviado"}, {"fecha": "2026-06-30", "dia": "Martes", "guia": "69460", "bultos": 1, "destino": "Arequipa", "empresa": "Enlaces", "estado": "Enviado"}, {"fecha": "2026-06-30", "dia": "Martes", "guia": "69463", "bultos": 2, "destino": "Iquitos", "empresa": "TPP Courier", "estado": "Enviado"}, {"fecha": "2026-06-30", "dia": "Martes", "guia": "69473", "bultos": 1, "destino": "Iquitos", "empresa": "TPP Courier", "estado": "Enviado"}, {"fecha": "2026-06-30", "dia": "Martes", "guia": "69351", "bultos": 1, "destino": "Iquitos", "empresa": "TPP Courier", "estado": "Enviado"}, {"fecha": "2026-06-30", "dia": "Martes", "guia": "69437", "bultos": 1, "destino": "Iquitos", "empresa": "TPP Courier", "estado": "Enviado"}, {"fecha": "2026-06-30", "dia": "Martes", "guia": "69457", "bultos": 1, "destino": "Pucallpa", "empresa": "TPP Courier", "estado": "Enviado"}, {"fecha": "2026-06-30", "dia": "Martes", "guia": "69476", "bultos": 1, "destino": "Pucallpa", "empresa": "TPP Courier", "estado": "Enviado"}, {"fecha": "2026-06-30", "dia": "Martes", "guia": "69438 - 437 - 472", "bultos": 3, "destino": "Aguaytia", "empresa": "Amazon Cargo", "estado": "Enviado"}, {"fecha": "2026-06-30", "dia": "Martes", "guia": "69459", "bultos": 1, "destino": "Aguaytia", "empresa": "Amazon Cargo", "estado": "Enviado"}, {"fecha": "2026-06-30", "dia": "Martes", "guia": "69445", "bultos": 2, "destino": "Satipo", "empresa": "Molina", "estado": "Enviado"}, {"fecha": "2026-06-30", "dia": "Martes", "guia": "69434", "bultos": 1, "destino": "Pucallpa", "empresa": "Transmar", "estado": "Enviado"}], "rutas": [{"fecha": "2026-06-08", "dia": "Lunes", "vehiculo": "CKU-731", "inicio": "17:15", "fin": "19:35", "dur_min": 140}, {"fecha": "2026-06-09", "dia": "Martes", "vehiculo": "CKU-731", "inicio": "17:03", "fin": "21:23", "dur_min": 260}, {"fecha": "2026-06-10", "dia": "Miércoles", "vehiculo": "CKR-900", "inicio": "17:13", "fin": "20:37", "dur_min": 204}, {"fecha": "2026-06-11", "dia": "Jueves", "vehiculo": "CKR-900", "inicio": "17:05", "fin": "20:04", "dur_min": 179}, {"fecha": "2026-06-12", "dia": "Viernes", "vehiculo": "CKR-900", "inicio": "17:06", "fin": "20:00", "dur_min": 174}, {"fecha": "2026-06-15", "dia": "Lunes", "vehiculo": "CKR-900", "inicio": "17:08", "fin": "20:33", "dur_min": 205}, {"fecha": "2026-06-16", "dia": "Martes", "vehiculo": "CKR-900", "inicio": "17:14", "fin": "18:34", "dur_min": 80}, {"fecha": "2026-06-16", "dia": "Martes", "vehiculo": "BHX-742", "inicio": "17:15", "fin": "19:45", "dur_min": 150}, {"fecha": "2026-06-17", "dia": "Miércoles", "vehiculo": "CKR-900", "inicio": "17:09", "fin": "19:17", "dur_min": 128}, {"fecha": "2026-06-17", "dia": "Miércoles", "vehiculo": "BHX-742", "inicio": "17:07", "fin": "19:30", "dur_min": 143}, {"fecha": "2026-06-18", "dia": "Jueves", "vehiculo": "CKR-900", "inicio": "17:15", "fin": "19:48", "dur_min": 153}, {"fecha": "2026-06-19", "dia": "Viernes", "vehiculo": "CKR-900", "inicio": "17:30", "fin": "18:46", "dur_min": 76}, {"fecha": "2026-06-19", "dia": "Viernes", "vehiculo": "BHX-742", "inicio": "17:27", "fin": "20:05", "dur_min": 158}, {"fecha": "2026-06-20", "dia": "Sábado", "vehiculo": "BHX-742", "inicio": "13:06", "fin": "15:21", "dur_min": 135}, {"fecha": "2026-06-20", "dia": "Sábado", "vehiculo": "CKU-731", "inicio": "13:02", "fin": "14:14", "dur_min": 72}, {"fecha": "2026-06-22", "dia": "Lunes", "vehiculo": "BHX-742", "inicio": "17:45", "fin": "20:51", "dur_min": 186}, {"fecha": "2026-06-23", "dia": "Martes", "vehiculo": "CKR-900", "inicio": "17:10", "fin": "20:44", "dur_min": 214}, {"fecha": "2026-06-23", "dia": "Martes", "vehiculo": "BHX-742", "inicio": "17:09", "fin": "19:36", "dur_min": 147}, {"fecha": "2026-06-24", "dia": "Miércoles", "vehiculo": "CKR-900", "inicio": "17:15", "fin": "19:45", "dur_min": 150}, {"fecha": "2026-06-24", "dia": "Miércoles", "vehiculo": "BHX-742", "inicio": "17:18", "fin": "19:40", "dur_min": 142}, {"fecha": "2026-06-25", "dia": "Jueves", "vehiculo": "CKR-900", "inicio": "17:22", "fin": "19:08", "dur_min": 106}, {"fecha": "2026-06-25", "dia": "Jueves", "vehiculo": "BHX-742", "inicio": "17:17", "fin": "20:17", "dur_min": 180}, {"fecha": "2026-06-26", "dia": "Viernes", "vehiculo": "CKR-900", "inicio": "17:26", "fin": "19:37", "dur_min": 131}, {"fecha": "2026-06-26", "dia": "Viernes", "vehiculo": "BHX-742", "inicio": "17:30", "fin": "20:32", "dur_min": 182}, {"fecha": "2026-06-27", "dia": "Sábado", "vehiculo": "CKR-900", "inicio": "13:03", "fin": "14:39", "dur_min": 96}, {"fecha": "2026-06-27", "dia": "Sábado", "vehiculo": "BHX-742", "inicio": "13:00", "fin": "15:01", "dur_min": 121}, {"fecha": "2026-06-30", "dia": "Martes", "vehiculo": "CKU-731", "inicio": "17:37", "fin": "20:44", "dur_min": 187}, {"fecha": "2026-07-01", "dia": "Miércoles", "vehiculo": "CKR-900", "inicio": "17:01", "fin": "19:23", "dur_min": 142}, {"fecha": "2026-07-01", "dia": "Miércoles", "vehiculo": "BHX-742", "inicio": "17:01", "fin": "19:31", "dur_min": 150}]};
+const D = DATA.despachos, R = DATA.rutas;
+const PAL = ['#7B5FFF','#06B6A4','#3B82F6','#F59E0B','#F43F5E','#10B981','#6366F1','#EC4899','#0EA5E9','#F97316','#14B8A6','#A855F7'];
+const DIAS=['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado','Domingo'];
+const fmt=n=>n.toLocaleString('es-PE');
+const state={metric:'despachos',fFecha:'',fDestino:'',fEmpresa:'',fEstado:'',search:''};
+Chart.defaults.font.family="'Inter',sans-serif";
+Chart.defaults.font.size=12;Chart.defaults.color='#64708a';
+
+/* ---- populate filters ---- */
+function uniq(arr){return [...new Set(arr)].sort((a,b)=>a.localeCompare(b,'es'))}
+function fill(id,vals,label){
+  const s=document.getElementById(id);
+  s.innerHTML=`<option value="">${label}</option>`+vals.map(v=>`<option>${v}</option>`).join('');
+}
+fill('fFecha',uniq(D.map(d=>d.fecha)),'Todas las fechas');
+fill('fDestino',uniq(D.map(d=>d.destino)),'Todos los destinos');
+fill('fEmpresa',uniq(D.map(d=>d.empresa)),'Todos los transportistas');
+fill('fEstado',uniq(D.map(d=>d.estado)),'Todos los estados');
+
+/* ---- filtering ---- */
+function filtered(){
+  return D.filter(d=>
+    (!state.fFecha||d.fecha===state.fFecha)&&
+    (!state.fDestino||d.destino===state.fDestino)&&
+    (!state.fEmpresa||d.empresa===state.fEmpresa)&&
+    (!state.fEstado||d.estado===state.fEstado));
+}
+const val=r=>state.metric==='bultos'?r.bultos:1;
+const mlabel=()=>state.metric==='bultos'?'Bultos':'Despachos';
+
+/* ---- KPIs ---- */
+function kpis(rows){
+  const desp=rows.length, bul=rows.reduce((a,r)=>a+r.bultos,0);
+  const env=rows.filter(r=>r.estado==='Enviado').length;
+  const pen=rows.filter(r=>r.estado==='Pendiente').length;
+  const cump=desp?(env/desp*100):0;
+  const dests=new Set(rows.map(r=>r.destino)).size;
+  const emps=new Set(rows.map(r=>r.empresa)).size;
+  const dias=new Set(rows.map(r=>r.fecha)).size;
+  const promB=desp?(bul/desp):0, promD=dias?(desp/dias):0;
+  const cP=cump>=95?'ok':'warn';
+  const cards=[
+   ['k1','Total despachos',fmt(desp),'guías registradas'],
+   ['k2','Total bultos',fmt(bul),'unidades movilizadas'],
+   ['k3','Cumplimiento',cump.toFixed(1)+'%',`<span class="pill ${cP}">${env} enviados</span>`],
+   ['k4','Pendientes',fmt(pen),pen>0?'requieren seguimiento':'sin pendientes'],
+   ['k5','Destinos atendidos',fmt(dests),'ciudades / provincias'],
+   ['k6','Transportistas',fmt(emps),'proveedores activos'],
+   ['k7','Prom. bultos/guía',promB.toFixed(1),'carga por despacho'],
+   ['k8','Prom. despachos/día',promD.toFixed(1),`en ${dias} días operativos`],
+  ];
+  document.getElementById('kpis').innerHTML=cards.map(c=>
+   `<div class="kpi ${c[0]}"><div class="strip"></div><div class="cap">${c[1]}</div>
+    <div class="val">${c[2]}</div><div class="foot">${c[3]}</div></div>`).join('');
+}
+
+/* ---- insights ---- */
+function topOf(rows,key){
+  const m={};rows.forEach(r=>m[r[key]]=(m[r[key]]||0)+1);
+  const e=Object.entries(m).sort((a,b)=>b[1]-a[1]);return e[0]||['—',0];
+}
+function insights(rows){
+  if(!rows.length){document.getElementById('insightList').innerHTML='<li>Sin datos para los filtros seleccionados.</li>';return;}
+  const td=topOf(rows,'destino'), te=topOf(rows,'empresa');
+  const byDay={};rows.forEach(r=>byDay[r.fecha]=(byDay[r.fecha]||0)+1);
+  const peak=Object.entries(byDay).sort((a,b)=>b[1]-a[1])[0];
+  const env=rows.filter(r=>r.estado==='Enviado').length, cump=(env/rows.length*100);
+  const empCount={};rows.forEach(r=>empCount[r.empresa]=(empCount[r.empresa]||0)+1);
+  const top3=Object.values(empCount).sort((a,b)=>b-a).slice(0,3).reduce((a,b)=>a+b,0);
+  const conc=(top3/rows.length*100);
+  const rutasAvg=R.length?Math.round(R.reduce((a,r)=>a+r.dur_min,0)/R.length):0;
+  const items=[
+   `El destino más frecuente es <b>${td[0]}</b> con <b>${td[1]}</b> despachos: conviene negociar tarifa preferente en esa ruta.`,
+   `El transportista con mayor carga es <b>${te[0]}</b> (<b>${te[1]}</b> despachos): principal socio logístico a fidelizar.`,
+   `El día de mayor movimiento fue <b>${peak[0]}</b> con <b>${peak[1]}</b> despachos: reforzar personal en picos.`,
+   `Nivel de cumplimiento de <b>${cump.toFixed(1)}%</b> ${cump>=95?'— operación saludable.':'— revisar los despachos pendientes.'}`,
+   `Los <b>3</b> principales transportistas concentran el <b>${conc.toFixed(0)}%</b> de la carga: ${conc>60?'alta dependencia, diversificar proveedores.':'cartera de proveedores equilibrada.'}`,
+   `El despacho a provincia toma en promedio <b>${rutasAvg} min</b> por viaje: referencia para metas de tiempo.`,
+  ];
+  document.getElementById('insightList').innerHTML=items.map(t=>`<li><span class="ic">▸</span><span>${t}</span></li>`).join('');
+}
+
+/* ---- charts ---- */
+let charts={};
+function grad(ctx,c1,c2){const g=ctx.createLinearGradient(0,0,0,300);g.addColorStop(0,c1);g.addColorStop(1,c2);return g;}
+const baseOpts={responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}}};
+
+function agg(rows,key){const m={};rows.forEach(r=>m[r[key]]=(m[r[key]]||0)+val(r));return m;}
+
+function build(rows){
+  /* Día combo */
+  const fechas=[...new Set(D.map(d=>d.fecha))].sort();
+  const perDayD={},perDayB={};
+  rows.forEach(r=>{perDayD[r.fecha]=(perDayD[r.fecha]||0)+1;perDayB[r.fecha]=(perDayB[r.fecha]||0)+r.bultos;});
+  const labD=fechas.filter(f=>perDayD[f]!==undefined);
+  const short=f=>{const[y,m,d]=f.split('-');return d+'/'+m;};
+  mk('chDia','bar',{labels:labD.map(short),datasets:[
+    {type:'bar',label:'Despachos',data:labD.map(f=>perDayD[f]||0),backgroundColor:'#7B5FFF',borderRadius:6,order:2},
+    {type:'line',label:'Bultos',data:labD.map(f=>perDayB[f]||0),borderColor:'#06B6A4',backgroundColor:'rgba(6,182,164,.15)',fill:true,tension:.35,pointRadius:4,pointBackgroundColor:'#06B6A4',order:1,yAxisID:'y1'}
+  ]},{...baseOpts,plugins:{legend:{display:true,position:'top',labels:{usePointStyle:true,boxWidth:8,padding:14}}},
+    scales:{y:{beginAtZero:true,title:{display:true,text:'Despachos'},grid:{color:'#eef1f8'}},
+    y1:{beginAtZero:true,position:'right',title:{display:true,text:'Bultos'},grid:{drawOnChartArea:false}},
+    x:{grid:{display:false}}}});
+
+  /* Estado doughnut */
+  const est=agg(rows,'estado');const ek=Object.keys(est);
+  const ecol={'Enviado':'#10B981','Pendiente':'#F59E0B','(Sin dato)':'#94a3b8'};
+  mk('chEstado','doughnut',{labels:ek,datasets:[{data:ek.map(k=>est[k]),
+     backgroundColor:ek.map(k=>ecol[k]||'#7B5FFF'),borderWidth:3,borderColor:'#fff'}]},
+    {...baseOpts,cutout:'62%',plugins:{legend:{display:true,position:'bottom',labels:{usePointStyle:true,boxWidth:9,padding:14}},
+     tooltip:{callbacks:{label:c=>` ${c.label}: ${fmt(c.raw)} (${(c.raw/rows.length*100).toFixed(1)}%)`}}}});
+
+  /* Top destinos */
+  hbar('chDestino',agg(rows,'destino'),12,'#3B82F6');
+  /* Top empresas */
+  hbar('chEmpresa',agg(rows,'empresa'),12,'#7B5FFF');
+
+  /* Semana */
+  const sem={};DIAS.forEach(d=>sem[d]=0);rows.forEach(r=>sem[r.dia]=(sem[r.dia]||0)+val(r));
+  const semLab=DIAS.filter(d=>sem[d]>0||['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'].includes(d));
+  mk('chSemana','bar',{labels:semLab,datasets:[{label:mlabel(),data:semLab.map(d=>sem[d]),
+     backgroundColor:semLab.map((_,i)=>PAL[i%PAL.length]),borderRadius:7}]},
+    {...baseOpts,scales:{y:{beginAtZero:true,grid:{color:'#eef1f8'}},x:{grid:{display:false}}},
+     plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>` ${mlabel()}: ${fmt(c.raw)}`}}}});
+
+  /* Bultos por destino top8 */
+  const bd={};rows.forEach(r=>bd[r.destino]=(bd[r.destino]||0)+r.bultos);
+  const be=Object.entries(bd).sort((a,b)=>b[1]-a[1]).slice(0,8);
+  mk('chBultos','bar',{labels:be.map(e=>e[0]),datasets:[{label:'Bultos',data:be.map(e=>e[1]),
+     backgroundColor:'#06B6A4',borderRadius:6}]},
+    {...baseOpts,indexAxis:'y',scales:{x:{beginAtZero:true,grid:{color:'#eef1f8'}},y:{grid:{display:false}}},
+     plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>` ${fmt(c.raw)} bultos`}}}});
+}
+
+function hbar(id,map,top,color){
+  let e=Object.entries(map).sort((a,b)=>b[1]-a[1]);
+  if(e.length>top){const otros=e.slice(top).reduce((a,x)=>a+x[1],0);e=e.slice(0,top);if(otros>0)e.push(['Otros',otros]);}
+  const total=e.reduce((a,x)=>a+x[1],0);
+  mk(id,'bar',{labels:e.map(x=>x[0]),datasets:[{label:mlabel(),data:e.map(x=>x[1]),
+     backgroundColor:e.map((x,i)=>x[0]==='Otros'?'#cbd5e1':color),borderRadius:6}]},
+    {...baseOpts,indexAxis:'y',scales:{x:{beginAtZero:true,grid:{color:'#eef1f8'}},y:{grid:{display:false},ticks:{autoSkip:false,font:{size:11.5}}}},
+     plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>` ${fmt(c.raw)} ${mlabel().toLowerCase()} (${(c.raw/total*100).toFixed(1)}%)`}}}});
+}
+
+function mk(id,type,data,opts){
+  if(charts[id]){charts[id].data=data;charts[id].options=opts;charts[id].config.type=type;charts[id].update();}
+  else charts[id]=new Chart(document.getElementById(id),{type,data,options:opts});
+}
+
+/* ---- rutas charts (independientes de filtros de despacho) ---- */
+function rutasCharts(){
+  const byV={};R.forEach(r=>{(byV[r.vehiculo]=byV[r.vehiculo]||[]).push(r.dur_min);});
+  const vk=Object.keys(byV);
+  mk('chVeh','bar',{labels:vk,datasets:[{label:'Minutos promedio',
+    data:vk.map(v=>Math.round(byV[v].reduce((a,b)=>a+b,0)/byV[v].length)),
+    backgroundColor:['#7B5FFF','#06B6A4','#3B82F6'],borderRadius:8}]},
+   {...baseOpts,scales:{y:{beginAtZero:true,title:{display:true,text:'Minutos'},grid:{color:'#eef1f8'}},x:{grid:{display:false}}},
+    plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>{const l=byV[c.label];return[` Promedio: ${c.raw} min`,` Viajes: ${l.length}`];}}}}});
+
+  const fechas=[...new Set(R.map(r=>r.fecha))].sort();
+  const short=f=>{const[y,m,d]=f.split('-');return d+'/'+m;};
+  const veh=['CKR-900','BHX-742','CKU-731'],vc={'CKR-900':'#7B5FFF','BHX-742':'#06B6A4','CKU-731':'#3B82F6'};
+  const ds=veh.map(v=>({label:v,borderColor:vc[v],backgroundColor:vc[v],tension:.3,spanGaps:true,pointRadius:3,
+    data:fechas.map(f=>{const rec=R.find(r=>r.fecha===f&&r.vehiculo===v);return rec?rec.dur_min:null;})}));
+  mk('chRutaDia','line',{labels:fechas.map(short),datasets:ds},
+   {...baseOpts,plugins:{legend:{display:true,position:'top',labels:{usePointStyle:true,boxWidth:8,padding:14}},
+    tooltip:{callbacks:{label:c=>c.raw==null?null:` ${c.dataset.label}: ${c.raw} min`}}},
+    scales:{y:{beginAtZero:true,title:{display:true,text:'Minutos por viaje'},grid:{color:'#eef1f8'}},x:{grid:{display:false}}}});
+}
+
+/* ---- table ---- */
+function table(rows){
+  let r=rows;
+  if(state.search){const q=state.search.toLowerCase();
+    r=r.filter(x=>(x.guia+x.destino+x.empresa).toLowerCase().includes(q));}
+  document.getElementById('tCount').textContent=`${fmt(r.length)} registros`;
+  document.getElementById('tBody').innerHTML=r.slice(0,400).map(x=>{
+    const[y,m,d]=x.fecha.split('-');
+    const st=x.estado==='Enviado'?'<span class="st env">Enviado</span>':
+             x.estado==='Pendiente'?'<span class="st pen">Pendiente</span>':x.estado;
+    return `<tr><td>${d}/${m}/${y}</td><td>${x.dia}</td><td>${x.guia||'—'}</td><td>${x.bultos}</td>
+     <td>${x.destino}</td><td>${x.empresa}</td><td>${st}</td></tr>`;}).join('');
+}
+
+/* ---- render ---- */
+function render(){
+  const rows=filtered();
+  kpis(rows);insights(rows);build(rows);table(rows);
+  const parts=[];
+  if(state.fFecha)parts.push('Fecha: '+state.fFecha);
+  if(state.fDestino)parts.push('Destino: '+state.fDestino);
+  if(state.fEmpresa)parts.push(state.fEmpresa);
+  if(state.fEstado)parts.push(state.fEstado);
+  document.getElementById('subhead').textContent=parts.length?parts.join(' · '):'Análisis de 226 despachos a provincia · 18–30 jun 2026';
+}
+
+/* ---- events ---- */
+fFecha.onchange=e=>{state.fFecha=e.target.value;render();};
+fDestino.onchange=e=>{state.fDestino=e.target.value;render();};
+fEmpresa.onchange=e=>{state.fEmpresa=e.target.value;render();};
+fEstado.onchange=e=>{state.fEstado=e.target.value;render();};
+tSearch.oninput=e=>{state.search=e.target.value;table(filtered());};
+document.getElementById('metricToggle').onclick=e=>{
+  if(e.target.dataset.m){state.metric=e.target.dataset.m;
+    [...e.currentTarget.children].forEach(b=>b.classList.toggle('active',b===e.target));
+    build(filtered());}
+};
+document.getElementById('btnReset').onclick=()=>{
+  Object.assign(state,{fFecha:'',fDestino:'',fEmpresa:'',fEstado:'',search:''});
+  ['fFecha','fDestino','fEmpresa','fEstado'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('tSearch').value='';render();
+};
+
+/* init */
+rutasCharts();render();
+</script>
+</body>
+</html>
