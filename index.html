@@ -248,10 +248,17 @@ footer b{color:var(--purple)}
     <div class="fitem"><label>Destino</label><select id="fDestino"></select></div>
     <div class="fitem"><label>Transportista</label><select id="fEmpresa"></select></div>
     <div class="fitem"><label>Estado</label><select id="fEstado"></select></div>
+    <div class="fitem"><label>Mes</label><select id="fMes"></select></div>
     <div class="fitem" style="flex:0 0 auto"><label>Métrica de análisis</label>
       <div class="toggle" id="metricToggle">
         <button data-m="despachos" class="active">Despachos</button>
         <button data-m="bultos">Bultos</button>
+      </div>
+    </div>
+    <div class="fitem" style="flex:0 0 auto"><label>Vista temporal</label>
+      <div class="toggle" id="acumToggle">
+        <button data-a="diario" class="active">Diario</button>
+        <button data-a="acum">Acumulado</button>
       </div>
     </div>
     <button class="reset" id="btnReset">↺ Limpiar filtros</button>
@@ -352,7 +359,7 @@ const D = DATA.despachos, R = DATA.rutas;
 const PAL = ['#7B5FFF','#06B6A4','#3B82F6','#F59E0B','#F43F5E','#10B981','#6366F1','#EC4899','#0EA5E9','#F97316','#14B8A6','#A855F7'];
 const DIAS=['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado','Domingo'];
 const fmt=n=>n.toLocaleString('es-PE');
-const state={metric:'despachos',fFecha:'',fDestino:'',fEmpresa:'',fEstado:'',search:''};
+const state={metric:'despachos',fFecha:'',fMes:'',fDestino:'',fEmpresa:'',fEstado:'',search:'',acum:'diario'};
 Chart.defaults.font.family="'Inter',sans-serif";
 Chart.defaults.font.size=12;Chart.defaults.color='#64708a';
 
@@ -366,11 +373,15 @@ fill('fFecha',uniq(D.map(d=>d.fecha)),'Todas las fechas');
 fill('fDestino',uniq(D.map(d=>d.destino)),'Todos los destinos');
 fill('fEmpresa',uniq(D.map(d=>d.empresa)),'Todos los transportistas');
 fill('fEstado',uniq(D.map(d=>d.estado)),'Todos los estados');
+const MESNOM={'01':'Enero','02':'Febrero','03':'Marzo','04':'Abril','05':'Mayo','06':'Junio','07':'Julio','08':'Agosto','09':'Septiembre','10':'Octubre','11':'Noviembre','12':'Diciembre'};
+(function(){const meses=[...new Set(D.map(d=>d.fecha.slice(0,7)))].sort();
+  document.getElementById('fMes').innerHTML='<option value="">Todos los meses</option>'+meses.map(m=>{const[y,mm]=m.split('-');return `<option value="${m}">${MESNOM[mm]} ${y}</option>`;}).join('');})();
 
 /* ---- filtering ---- */
 function filtered(){
   return D.filter(d=>
     (!state.fFecha||d.fecha===state.fFecha)&&
+    (!state.fMes||d.fecha.slice(0,7)===state.fMes)&&
     (!state.fDestino||d.destino===state.fDestino)&&
     (!state.fEmpresa||d.empresa===state.fEmpresa)&&
     (!state.fEstado||d.estado===state.fEstado));
@@ -444,12 +455,16 @@ function build(rows){
   rows.forEach(r=>{perDayD[r.fecha]=(perDayD[r.fecha]||0)+1;perDayB[r.fecha]=(perDayB[r.fecha]||0)+r.bultos;});
   const labD=fechas.filter(f=>perDayD[f]!==undefined);
   const short=f=>{const[y,m,d]=f.split('-');return d+'/'+m;};
+  let dDesp=labD.map(f=>perDayD[f]||0), dBul=labD.map(f=>perDayB[f]||0);
+  const acu=state.acum==='acum';
+  if(acu){let ad=0,ab=0;dDesp=dDesp.map(v=>ad+=v);dBul=dBul.map(v=>ab+=v);}
+  const sfx=acu?' (acum.)':'';
   mk('chDia','bar',{labels:labD.map(short),datasets:[
-    {type:'bar',label:'Despachos',data:labD.map(f=>perDayD[f]||0),backgroundColor:'#7B5FFF',borderRadius:6,order:2},
-    {type:'line',label:'Bultos',data:labD.map(f=>perDayB[f]||0),borderColor:'#06B6A4',backgroundColor:'rgba(6,182,164,.15)',fill:true,tension:.35,pointRadius:4,pointBackgroundColor:'#06B6A4',order:1,yAxisID:'y1'}
+    {type:acu?'line':'bar',label:'Despachos'+sfx,data:dDesp,backgroundColor:acu?'rgba(123,95,255,.15)':'#7B5FFF',borderColor:'#7B5FFF',fill:acu,tension:.3,pointRadius:acu?3:0,borderRadius:6,order:2},
+    {type:'line',label:'Bultos'+sfx,data:dBul,borderColor:'#06B6A4',backgroundColor:'rgba(6,182,164,.15)',fill:true,tension:.35,pointRadius:acu?3:4,pointBackgroundColor:'#06B6A4',order:1,yAxisID:'y1'}
   ]},{...baseOpts,plugins:{legend:{display:true,position:'top',labels:{usePointStyle:true,boxWidth:8,padding:14}}},
-    scales:{y:{beginAtZero:true,title:{display:true,text:'Despachos'},grid:{color:'#eef1f8'}},
-    y1:{beginAtZero:true,position:'right',title:{display:true,text:'Bultos'},grid:{drawOnChartArea:false}},
+    scales:{y:{beginAtZero:true,title:{display:true,text:'Despachos'+sfx},grid:{color:'#eef1f8'}},
+    y1:{beginAtZero:true,position:'right',title:{display:true,text:'Bultos'+sfx},grid:{drawOnChartArea:false}},
     x:{grid:{display:false}}}});
 
   /* Estado doughnut */
@@ -538,14 +553,21 @@ function render(){
   kpis(rows);insights(rows);build(rows);table(rows);recos(rows);
   const parts=[];
   if(state.fFecha)parts.push('Fecha: '+state.fFecha);
+  if(state.fMes){const[y,mm]=state.fMes.split('-');parts.push(MESNOM[mm]+' '+y);}
   if(state.fDestino)parts.push('Destino: '+state.fDestino);
   if(state.fEmpresa)parts.push(state.fEmpresa);
   if(state.fEstado)parts.push(state.fEstado);
-  document.getElementById('subhead').textContent=parts.length?parts.join(' · '):'Análisis de 614 despachos a provincia · 18 jun – 18 jul 2026';
+  document.getElementById('subhead').textContent=parts.length?parts.join(' · '):'Análisis de '+D.length+' despachos a provincia · 18 jun – 18 jul 2026';
 }
 
 /* ---- events ---- */
 fFecha.onchange=e=>{state.fFecha=e.target.value;render();};
+fMes.onchange=e=>{state.fMes=e.target.value;render();};
+document.getElementById('acumToggle').onclick=e=>{
+  if(e.target.dataset.a){state.acum=e.target.dataset.a;
+    [...e.currentTarget.children].forEach(b=>b.classList.toggle('active',b===e.target));
+    build(filtered());}
+};
 fDestino.onchange=e=>{state.fDestino=e.target.value;render();};
 fEmpresa.onchange=e=>{state.fEmpresa=e.target.value;render();};
 fEstado.onchange=e=>{state.fEstado=e.target.value;render();};
@@ -556,8 +578,8 @@ document.getElementById('metricToggle').onclick=e=>{
     build(filtered());}
 };
 document.getElementById('btnReset').onclick=()=>{
-  Object.assign(state,{fFecha:'',fDestino:'',fEmpresa:'',fEstado:'',search:''});
-  ['fFecha','fDestino','fEmpresa','fEstado'].forEach(id=>document.getElementById(id).value='');
+  Object.assign(state,{fFecha:'',fMes:'',fDestino:'',fEmpresa:'',fEstado:'',search:''});
+  ['fFecha','fMes','fDestino','fEmpresa','fEstado'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('tSearch').value='';render();
 };
 
